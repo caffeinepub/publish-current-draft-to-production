@@ -1,0 +1,34 @@
+{
+  "kind": "build_request",
+  "title": "Publish current draft to production",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Publish the currently deployed draft application (Draft Version 21) to production so the production URL serves the same build as the draft.",
+      "target": "unknown",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "Publish the draft"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The production deployment is updated to match Draft Version 21.",
+        "Users visiting the production URL see the same behavior/features as in the draft review environment.",
+        "No additional code changes are required unless publishing fails due to a detected build/deploy issue (in which case the failure reason is reported)."
+      ]
+    }
+  ],
+  "constraints": [],
+  "nonGoals": [
+    "Adding new features or UI changes unrelated to publishing.",
+    "Refactoring backend/frontend code when not required to complete the publish."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

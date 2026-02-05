@@ -1,0 +1,23 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Publish Draft Version 21 to production (frontend verification & release checklist)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Provide a frontend-focused publish checklist and verification steps to ensure production serves the same build/behavior as Draft Version 21, without introducing product/UI changes.",
+      "acceptanceCriteria": [
+        "The production deployment is updated to match Draft Version 21.",
+        "Users visiting the production URL see the same behavior/features as in the draft review environment.",
+        "No additional code changes are required unless publishing fails due to a detected build/deploy issue (in which case the failure reason is reported)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/DEPLOYMENT.md",
+          "operation": "create",
+          "description": "Add a concise release/publish checklist for promoting Draft Version 21 to production, including: confirming the draft commit/build identifier, using the existing GitHub export/deploy tooling (use the github-export-icp-cli templates/scripts as the source of deployment workflow—Verify the component's usage instructions before implementing), and a post-deploy verification checklist comparing production vs draft behaviors (routing, auth/login flow, dashboard, leaderboard, chat) to satisfy acceptance criteria without introducing new UI/features."
+        }
+      ]
+    }
+  ]
+}

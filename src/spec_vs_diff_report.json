@@ -1,0 +1,44 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-05T20:54:38.509Z",
+  "summary": "The diff contains substantial new/modified application code and documentation (including a deployment guide), but it does not provide concrete evidence of actually publishing Draft Version 21 to production (e.g., release/tag, deployment config changes, or production-targeted build/deploy updates). It also appears to introduce or describe multiple new product features, which were explicitly non-goals for a publish-only request.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Publish the currently deployed draft application (Draft Version 21) to production so the production URL serves the same build as the draft.",
+      "reason": "The diff does not show any definitive production deployment action/configuration (e.g., CI/CD workflow changes, environment/canister target updates, version pinning/tagging) that would ensure production is updated to match Draft Version 21. Adding a deployment guide describes steps but is not itself evidence that production now serves the Draft Version 21 build.",
+      "evidence": [
+        "frontend/DEPLOYMENT.md",
+        "project_state.json"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added/introduced a broad set of product features and UI/UX enhancements (e.g., real-time leaderboard polling, fair evaluation system, enhanced chat theme, cumulative progress visualization, badge system, daily reminders, profile setup flow enhancements) despite the request being publish-only with a non-goal of adding new features or unrelated UI changes.",
+      "reason": "BuildRequest explicitly limits scope to publishing Draft Version 21 to production with no additional code changes unless required to fix a deploy/build failure; the diff shows multiple code modifications and feature descriptions beyond deployment.",
+      "evidence": [
+        "frontend/DEPLOYMENT.md",
+        "frontend-file-summaries.txt",
+        "backend/main.mo",
+        "frontend/src/hooks/useInternetIdentity.ts"
+      ]
+    },
+    {
+      "description": "Added project tracking/state metadata file describing the request as a pending feature request.",
+      "reason": "Not requested as part of publishing Draft Version 21 to production.",
+      "evidence": [
+        "project_state.json"
+      ]
+    }
+  ],
+  "confidence": 0.74,
+  "changed_files": [
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/DEPLOYMENT.md",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "project_state.json"
+  ]
+}
