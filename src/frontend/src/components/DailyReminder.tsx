@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from './ui/card';
-import { X, Bell } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useGetStats } from '../hooks/useQueries';
 
@@ -19,9 +19,9 @@ export default function DailyReminder() {
       return;
     }
 
-    // Show reminder if user hasn't completed 5 problems
+    // Show reminder only if user has solved 0 questions
     const timer = setTimeout(() => {
-      if (stats && Number(stats.todayProblems) < 5) {
+      if (stats && Number(stats.todayQuestions) === 0) {
         setShowReminder(true);
       }
     }, 5000); // Show after 5 seconds
@@ -36,8 +36,6 @@ export default function DailyReminder() {
   };
 
   if (!showReminder || dismissed) return null;
-
-  const problemsLeft = 5 - Number(stats?.todayProblems || 0);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-500">
@@ -67,10 +65,10 @@ export default function DailyReminder() {
                 Daily Reminder! 🔔
               </h3>
               <p className="text-sm text-foreground">
-                You have <span className="font-bold text-primary">{problemsLeft}</span> problem{problemsLeft !== 1 ? 's' : ''} left to complete today!
+                You haven't logged any questions today yet!
               </p>
               <p className="text-xs text-muted-foreground">
-                Keep your streak going and avoid penalties! 💪
+                Solve at least <strong>1 question</strong> to keep your streak going and avoid the ₹20 fine! 💪
               </p>
             </div>
           </div>

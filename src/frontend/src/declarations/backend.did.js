@@ -20,15 +20,15 @@ export const Badge = IDL.Variant({
 });
 export const Time = IDL.Int;
 export const DailyRecord = IDL.Record({
+  'questionsSolved' : IDL.Nat,
   'date' : Time,
   'penaltyApplied' : IDL.Nat,
-  'problemsSolved' : IDL.Nat,
 });
 export const Principal = IDL.Principal;
 export const UserProfile = IDL.Record({
+  'totalQuestionsSolved' : IDL.Nat,
   'name' : IDL.Text,
   'totalFine' : IDL.Nat,
-  'totalProblemsSolved' : IDL.Nat,
   'badge' : IDL.Opt(Badge),
   'currentStreak' : IDL.Nat,
 });
@@ -52,9 +52,10 @@ export const idlService = IDL.Service({
       [
         IDL.Vec(
           IDL.Record({
+            'highestDailyQuestions' : IDL.Nat,
+            'totalQuestionsSolved' : IDL.Nat,
             'name' : IDL.Text,
             'totalFine' : IDL.Nat,
-            'totalProblemsSolved' : IDL.Nat,
             'badge' : IDL.Opt(Badge),
             'currentStreak' : IDL.Nat,
           })
@@ -67,10 +68,11 @@ export const idlService = IDL.Service({
       [
         IDL.Vec(
           IDL.Record({
+            'highestDailyQuestions' : IDL.Nat,
+            'totalQuestionsSolved' : IDL.Nat,
             'name' : IDL.Text,
             'totalFine' : IDL.Nat,
             'dailyRecords' : IDL.Vec(DailyRecord),
-            'totalProblemsSolved' : IDL.Nat,
             'badge' : IDL.Opt(Badge),
             'currentStreak' : IDL.Nat,
           })
@@ -88,16 +90,17 @@ export const idlService = IDL.Service({
       [],
       [
         IDL.Record({
+          'highestDailyQuestions' : IDL.Nat,
+          'totalQuestionsSolved' : IDL.Nat,
+          'todayQuestions' : IDL.Nat,
           'totalFine' : IDL.Nat,
-          'totalProblemsSolved' : IDL.Nat,
-          'todayProblems' : IDL.Nat,
           'badge' : IDL.Opt(Badge),
           'currentStreak' : IDL.Nat,
         }),
       ],
       ['query'],
     ),
-  'getTodayProblems' : IDL.Func([], [IDL.Nat], ['query']),
+  'getTodayQuestions' : IDL.Func([], [IDL.Nat], ['query']),
   'getUserDailyHistory' : IDL.Func(
       [Principal],
       [IDL.Vec(DailyRecord)],
@@ -105,7 +108,7 @@ export const idlService = IDL.Service({
     ),
   'getUserLifetimeStats' : IDL.Func(
       [Principal],
-      [IDL.Record({ 'totalFine' : IDL.Nat, 'totalProblemsSolved' : IDL.Nat })],
+      [IDL.Record({ 'totalQuestionsSolved' : IDL.Nat, 'totalFine' : IDL.Nat })],
       ['query'],
     ),
   'getUserProfile' : IDL.Func([Principal], [IDL.Opt(UserProfile)], ['query']),
@@ -114,7 +117,8 @@ export const idlService = IDL.Service({
       [
         IDL.Opt(
           IDL.Record({
-            'todayProblems' : IDL.Nat,
+            'highestDailyQuestions' : IDL.Nat,
+            'todayQuestions' : IDL.Nat,
             'profile' : UserProfile,
             'recordCount' : IDL.Nat,
           })
@@ -127,9 +131,9 @@ export const idlService = IDL.Service({
   'resetAllUserData' : IDL.Func([], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'sendMessage' : IDL.Func([Principal, IDL.Text], [], []),
-  'setTodayProblemsForUser' : IDL.Func([Principal, IDL.Nat], [], []),
+  'setTodayQuestionsForUser' : IDL.Func([Principal, IDL.Nat], [], []),
   'triggerDailyReset' : IDL.Func([], [], []),
-  'updateTodayProblems' : IDL.Func([IDL.Nat], [], []),
+  'updateTodayQuestions' : IDL.Func([IDL.Nat], [], []),
   'updateYesterdayData' : IDL.Func([], [IDL.Text], []),
   'verifyAccountExists' : IDL.Func(
       [],
@@ -153,15 +157,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const Time = IDL.Int;
   const DailyRecord = IDL.Record({
+    'questionsSolved' : IDL.Nat,
     'date' : Time,
     'penaltyApplied' : IDL.Nat,
-    'problemsSolved' : IDL.Nat,
   });
   const Principal = IDL.Principal;
   const UserProfile = IDL.Record({
+    'totalQuestionsSolved' : IDL.Nat,
     'name' : IDL.Text,
     'totalFine' : IDL.Nat,
-    'totalProblemsSolved' : IDL.Nat,
     'badge' : IDL.Opt(Badge),
     'currentStreak' : IDL.Nat,
   });
@@ -182,9 +186,10 @@ export const idlFactory = ({ IDL }) => {
         [
           IDL.Vec(
             IDL.Record({
+              'highestDailyQuestions' : IDL.Nat,
+              'totalQuestionsSolved' : IDL.Nat,
               'name' : IDL.Text,
               'totalFine' : IDL.Nat,
-              'totalProblemsSolved' : IDL.Nat,
               'badge' : IDL.Opt(Badge),
               'currentStreak' : IDL.Nat,
             })
@@ -197,10 +202,11 @@ export const idlFactory = ({ IDL }) => {
         [
           IDL.Vec(
             IDL.Record({
+              'highestDailyQuestions' : IDL.Nat,
+              'totalQuestionsSolved' : IDL.Nat,
               'name' : IDL.Text,
               'totalFine' : IDL.Nat,
               'dailyRecords' : IDL.Vec(DailyRecord),
-              'totalProblemsSolved' : IDL.Nat,
               'badge' : IDL.Opt(Badge),
               'currentStreak' : IDL.Nat,
             })
@@ -218,16 +224,17 @@ export const idlFactory = ({ IDL }) => {
         [],
         [
           IDL.Record({
+            'highestDailyQuestions' : IDL.Nat,
+            'totalQuestionsSolved' : IDL.Nat,
+            'todayQuestions' : IDL.Nat,
             'totalFine' : IDL.Nat,
-            'totalProblemsSolved' : IDL.Nat,
-            'todayProblems' : IDL.Nat,
             'badge' : IDL.Opt(Badge),
             'currentStreak' : IDL.Nat,
           }),
         ],
         ['query'],
       ),
-    'getTodayProblems' : IDL.Func([], [IDL.Nat], ['query']),
+    'getTodayQuestions' : IDL.Func([], [IDL.Nat], ['query']),
     'getUserDailyHistory' : IDL.Func(
         [Principal],
         [IDL.Vec(DailyRecord)],
@@ -237,8 +244,8 @@ export const idlFactory = ({ IDL }) => {
         [Principal],
         [
           IDL.Record({
+            'totalQuestionsSolved' : IDL.Nat,
             'totalFine' : IDL.Nat,
-            'totalProblemsSolved' : IDL.Nat,
           }),
         ],
         ['query'],
@@ -249,7 +256,8 @@ export const idlFactory = ({ IDL }) => {
         [
           IDL.Opt(
             IDL.Record({
-              'todayProblems' : IDL.Nat,
+              'highestDailyQuestions' : IDL.Nat,
+              'todayQuestions' : IDL.Nat,
               'profile' : UserProfile,
               'recordCount' : IDL.Nat,
             })
@@ -262,9 +270,9 @@ export const idlFactory = ({ IDL }) => {
     'resetAllUserData' : IDL.Func([], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'sendMessage' : IDL.Func([Principal, IDL.Text], [], []),
-    'setTodayProblemsForUser' : IDL.Func([Principal, IDL.Nat], [], []),
+    'setTodayQuestionsForUser' : IDL.Func([Principal, IDL.Nat], [], []),
     'triggerDailyReset' : IDL.Func([], [], []),
-    'updateTodayProblems' : IDL.Func([IDL.Nat], [], []),
+    'updateTodayQuestions' : IDL.Func([IDL.Nat], [], []),
     'updateYesterdayData' : IDL.Func([], [IDL.Text], []),
     'verifyAccountExists' : IDL.Func(
         [],

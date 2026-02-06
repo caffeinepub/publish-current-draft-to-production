@@ -111,7 +111,7 @@ export function useGetTodayProblems() {
     queryKey: ['todayProblems'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getTodayProblems();
+      return actor.getTodayQuestions();
     },
     enabled: !!actor && !actorFetching,
     refetchInterval: getRefetchInterval(),
@@ -125,7 +125,7 @@ export function useUpdateTodayProblems() {
   return useMutation({
     mutationFn: async (count: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.updateTodayProblems(count);
+      return actor.updateTodayQuestions(count);
     },
     onSuccess: () => {
       // Invalidate all queries that depend on problem counts and cumulative totals
@@ -186,11 +186,12 @@ export function useGetAllUserStats() {
 
   return useQuery<Array<{
     name: string;
-    totalProblemsSolved: bigint;
+    totalQuestionsSolved: bigint;
     totalFine: bigint;
     currentStreak: bigint;
     badge?: Badge;
     dailyRecords: DailyRecord[];
+    highestDailyQuestions: bigint;
   }>>({
     queryKey: ['allUserStats'],
     queryFn: async () => {
@@ -202,7 +203,7 @@ export function useGetAllUserStats() {
           stats.map(s => ({ 
             name: s.name, 
             totalFine: Number(s.totalFine),
-            totalProblems: Number(s.totalProblemsSolved),
+            totalQuestions: Number(s.totalQuestionsSolved),
             streak: Number(s.currentStreak)
           }))
         );

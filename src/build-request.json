@@ -1,31 +1,95 @@
 {
   "kind": "build_request",
-  "title": "Publish current draft to production",
+  "title": "Allow any daily question count with streak on ≥1 and flat ₹20 fine on 0",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Publish the currently deployed draft application (Draft Version 21) to production so the production URL serves the same build as the draft.",
-      "target": "unknown",
+      "text": "Update backend daily reset logic so users can log any number of questions per day (no fixed goal of 5), and apply streak/fine rules as: (a) if questions solved for the day is >= 1, increment current streak by 1 and apply no fine; (b) if questions solved for the day is 0, reset current streak to 0 and apply a flat fine of 20 rupees (always 20, not scaled). Persist the daily record with the day’s questionsSolved and the penaltyApplied amount.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "Publish the draft"
+          "Remove the rule that forces users to solve exactly 5 questions.",
+          "Allow users to solve any number of questions per day.",
+          "Streak increases if they solve at least 1 question.",
+          "If they solve 0 questions in a day, streak resets and a 20 rs fine is applied. the fine always be 20 rs if they do 0 questions."
         ]
       },
       "acceptanceCriteria": [
-        "The production deployment is updated to match Draft Version 21.",
-        "Users visiting the production URL see the same behavior/features as in the draft review environment.",
-        "No additional code changes are required unless publishing fails due to a detected build/deploy issue (in which case the failure reason is reported)."
+        "When the daily reset runs, a day with problemsSolved >= 1 produces penaltyApplied = 0 and increases currentStreak by 1.",
+        "When the daily reset runs, a day with problemsSolved = 0 produces penaltyApplied = 20 and sets currentStreak to 0.",
+        "totalFine and profile.totalFine increase only by the recorded penaltyApplied for that day.",
+        "DailyRecord.penaltyApplied is never computed from a missing-goal formula (no (5 - count) * 20 behavior remains)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Update backend APIs that set daily problem count to accept any non-negative count (Nat) without enforcing an upper limit of 5, and ensure the daily count update still triggers a reset first if the user is past the daily reset boundary (so the update applies to the new day).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Allow users to solve any number of questions per day."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Calling updateTodayProblems with a count greater than 5 succeeds and updates todayProblemCount accordingly.",
+        "Calling updateTodayProblems with 0 succeeds and sets todayProblemCount to 0.",
+        "If updateTodayProblems is called after the daily reset time and shouldResetForUser is true, the previous day is processed before storing the new day’s todayProblemCount."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Replace the frontend daily tracking UI that uses 5 checkboxes with an input that lets the user enter the number of questions solved today. If the input is left empty, treat it as 0 questions. Saving the value must call the existing updateTodayProblems mutation with the entered value (or 0 if blank).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "let the user enter the no. of questions they did...if they didn't enter anything..so its 0 questions..."
+        ]
+      },
+      "acceptanceCriteria": [
+        "The DailyTracker component provides a numeric entry for “questions solved today” rather than 5 fixed checkboxes.",
+        "If the user clears the input and submits/saves, the app sends 0 to updateTodayProblems.",
+        "If the user enters a number (including >5) and submits/saves, the app sends that number to updateTodayProblems and the UI reflects the saved value after mutation success.",
+        "All user-facing labels/messages related to this control are in English."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Update the frontend reminder logic and copy to remove the “complete 5 problems” framing. The reminder should be based on maintaining the streak rule: show a reminder when today’s logged questions are 0 (i.e., they have not solved at least 1 question yet).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Streak increases if they solve at least 1 question.",
+          "If they solve 0 questions in a day, streak resets and a 20 rs fine is applied."
+        ]
+      },
+      "acceptanceCriteria": [
+        "DailyReminder no longer calculates “problems left to complete 5”.",
+        "DailyReminder triggers only when stats.todayProblems is 0 (and not dismissed for the day).",
+        "Reminder text is updated to English copy consistent with the new rule (at least 1 question keeps streak; 0 breaks streak and applies a 20 rupees fine)."
       ]
     }
   ],
-  "constraints": [],
+  "constraints": [
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead."
+  ],
   "nonGoals": [
-    "Adding new features or UI changes unrelated to publishing.",
-    "Refactoring backend/frontend code when not required to complete the publish."
+    "Do not implement a scaled/multi-day missed fine formula; the fine for a day with 0 questions must remain a flat 20 rupees.",
+    "Do not add new authentication methods beyond Internet Identity.",
+    "Do not add new databases or external storage services."
   ],
   "imageRequirements": {
     "required": [],

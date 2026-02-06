@@ -1,44 +1,75 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T20:54:38.509Z",
-  "summary": "The diff contains substantial new/modified application code and documentation (including a deployment guide), but it does not provide concrete evidence of actually publishing Draft Version 21 to production (e.g., release/tag, deployment config changes, or production-targeted build/deploy updates). It also appears to introduce or describe multiple new product features, which were explicitly non-goals for a publish-only request.",
+  "generatedAt": "2026-02-06T15:53:47.110Z",
+  "summary": "Frontend updates implement numeric daily question entry and reminder logic based on 0 questions, but backend changes for the new reset/fine rules and the unlimited-count API behavior cannot be verified from the provided truncated diff. The diff also includes several additional UI/feature enhancements (charts, leaderboard live updates, chat/UI polish) and a backend data migration that were not requested in the BuildRequest.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Publish the currently deployed draft application (Draft Version 21) to production so the production URL serves the same build as the draft.",
-      "reason": "The diff does not show any definitive production deployment action/configuration (e.g., CI/CD workflow changes, environment/canister target updates, version pinning/tagging) that would ensure production is updated to match Draft Version 21. Adding a deployment guide describes steps but is not itself evidence that production now serves the Draft Version 21 build.",
+      "requirement": "Update backend daily reset logic to allow any number of questions per day and apply streak/fine rules (>=1 => streak+1, penaltyApplied=0; 0 => streak=0, penaltyApplied=20) while persisting DailyRecord with questionsSolved and penaltyApplied; remove any (5-count)*20 logic.",
+      "reason": "backend/main.mo is truncated before the daily reset processing logic; the diff summary does not show the actual reset implementation, penalty calculation, or the removal of any prior 'goal of 5' missing-goal fine formula.",
       "evidence": [
-        "frontend/DEPLOYMENT.md",
-        "project_state.json"
+        "backend/main.mo (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Update backend APIs (e.g., updateTodayProblems) to accept any non-negative Nat without an upper limit of 5, and ensure it triggers a daily reset first when shouldResetForUser is true.",
+      "reason": "The diff summary does not include the updateTodayProblems (or equivalent) method implementation or its validation logic, and backend/main.mo is truncated so the reset-before-update behavior cannot be confirmed.",
+      "evidence": [
+        "backend/main.mo (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added/introduced a broad set of product features and UI/UX enhancements (e.g., real-time leaderboard polling, fair evaluation system, enhanced chat theme, cumulative progress visualization, badge system, daily reminders, profile setup flow enhancements) despite the request being publish-only with a non-goal of adding new features or unrelated UI changes.",
-      "reason": "BuildRequest explicitly limits scope to publishing Draft Version 21 to production with no additional code changes unless required to fix a deploy/build failure; the diff shows multiple code modifications and feature descriptions beyond deployment.",
+      "description": "Backend data migration module added (renaming problems->questions fields, adding highestDailyQuestions, altering actor fields like PENALTY_EXCEPTIONAL_LIMIT).",
+      "reason": "BuildRequest did not request a migration system or schema migration module; it only required logic/API/UI updates.",
       "evidence": [
-        "frontend/DEPLOYMENT.md",
-        "frontend-file-summaries.txt",
-        "backend/main.mo",
-        "frontend/src/hooks/useInternetIdentity.ts"
+        "backend/migration.mo",
+        "backend/main.mo"
       ]
     },
     {
-      "description": "Added project tracking/state metadata file describing the request as a pending feature request.",
-      "reason": "Not requested as part of publishing Draft Version 21 to production.",
+      "description": "Added/expanded leaderboard live updates and polling behavior (e.g., 30-second refetch interval) and related UI elements.",
+      "reason": "BuildRequest did not request leaderboard changes or real-time updates; only daily tracking and reminder behavior were requested.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/Leaderboard.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Added/expanded cumulative history and progress chart features/visualizations.",
+      "reason": "BuildRequest did not request new/changed history timeline or charting functionality beyond adapting to the new question-count model.",
+      "evidence": [
+        "frontend/src/components/HistoryTimeline.tsx",
+        "frontend/src/components/ProgressChart.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Broad UI/UX enhancements and copy/animation changes across multiple components (header/footer/profile modal/badge display/chat dialog/global CSS).",
+      "reason": "BuildRequest scope was limited to replacing the 5-checkbox daily tracker control and updating reminder logic/copy; widespread UI redesign is out of scope.",
+      "evidence": [
+        "frontend-file-summaries.txt",
+        "frontend/src/components/StatsCard.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/DEPLOYMENT.md",
-    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/components/DailyReminder.tsx",
+    "frontend/src/components/DailyTracker.tsx",
+    "frontend/src/components/HistoryTimeline.tsx",
+    "frontend/src/components/ProgressChart.tsx",
+    "frontend/src/components/StatsCard.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/Leaderboard.tsx",
     "project_state.json"
   ]
 }

@@ -15,9 +15,9 @@ export type Badge = { 'dsaMasterCat' : null } |
   { 'persistentRabbit' : null };
 export interface ChatUser { 'principal' : Principal, 'name' : string }
 export interface DailyRecord {
+  'questionsSolved' : bigint,
   'date' : Time,
   'penaltyApplied' : bigint,
-  'problemsSolved' : bigint,
 }
 export interface Message {
   'content' : string,
@@ -28,9 +28,9 @@ export interface Message {
 export type Principal = Principal;
 export type Time = bigint;
 export interface UserProfile {
+  'totalQuestionsSolved' : bigint,
   'name' : string,
   'totalFine' : bigint,
-  'totalProblemsSolved' : bigint,
   'badge' : [] | [Badge],
   'currentStreak' : bigint,
 }
@@ -45,9 +45,10 @@ export interface _SERVICE {
     [],
     Array<
       {
+        'highestDailyQuestions' : bigint,
+        'totalQuestionsSolved' : bigint,
         'name' : string,
         'totalFine' : bigint,
-        'totalProblemsSolved' : bigint,
         'badge' : [] | [Badge],
         'currentStreak' : bigint,
       }
@@ -57,10 +58,11 @@ export interface _SERVICE {
     [],
     Array<
       {
+        'highestDailyQuestions' : bigint,
+        'totalQuestionsSolved' : bigint,
         'name' : string,
         'totalFine' : bigint,
         'dailyRecords' : Array<DailyRecord>,
-        'totalProblemsSolved' : bigint,
         'badge' : [] | [Badge],
         'currentStreak' : bigint,
       }
@@ -75,25 +77,27 @@ export interface _SERVICE {
   'getStats' : ActorMethod<
     [],
     {
+      'highestDailyQuestions' : bigint,
+      'totalQuestionsSolved' : bigint,
+      'todayQuestions' : bigint,
       'totalFine' : bigint,
-      'totalProblemsSolved' : bigint,
-      'todayProblems' : bigint,
       'badge' : [] | [Badge],
       'currentStreak' : bigint,
     }
   >,
-  'getTodayProblems' : ActorMethod<[], bigint>,
+  'getTodayQuestions' : ActorMethod<[], bigint>,
   'getUserDailyHistory' : ActorMethod<[Principal], Array<DailyRecord>>,
   'getUserLifetimeStats' : ActorMethod<
     [Principal],
-    { 'totalFine' : bigint, 'totalProblemsSolved' : bigint }
+    { 'totalQuestionsSolved' : bigint, 'totalFine' : bigint }
   >,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getUserStats' : ActorMethod<
     [Principal],
     [] | [
       {
-        'todayProblems' : bigint,
+        'highestDailyQuestions' : bigint,
+        'todayQuestions' : bigint,
         'profile' : UserProfile,
         'recordCount' : bigint,
       }
@@ -104,9 +108,9 @@ export interface _SERVICE {
   'resetAllUserData' : ActorMethod<[], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'sendMessage' : ActorMethod<[Principal, string], undefined>,
-  'setTodayProblemsForUser' : ActorMethod<[Principal, bigint], undefined>,
+  'setTodayQuestionsForUser' : ActorMethod<[Principal, bigint], undefined>,
   'triggerDailyReset' : ActorMethod<[], undefined>,
-  'updateTodayProblems' : ActorMethod<[bigint], undefined>,
+  'updateTodayQuestions' : ActorMethod<[bigint], undefined>,
   'updateYesterdayData' : ActorMethod<[], string>,
   'verifyAccountExists' : ActorMethod<
     [],

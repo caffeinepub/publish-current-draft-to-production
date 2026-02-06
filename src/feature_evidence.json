@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-publish-the-currently-deployed-draft-application-draft-version-21-to-production-so-the-production-url-serves-the-same-build-as-the-draft",
-      "featureTitle": "Publish the currently deployed draft application (Draft Version 21) to production so the production URL serves the same build as the draft.",
+      "featureId": "feature-replace-the-frontend-daily-tracking-ui-that-uses-5-checkboxes-with-an-input-that-lets-the-user-enter-the-number-of-questions-solved-today-if-the-input-is-left-empty-treat-it-as-0-questions-saving-the-value-must-call-the-existing-updatetodayproblems-mutation-with-the-entered-value-or-0-if-blank",
+      "featureTitle": "Replace the frontend daily tracking UI that uses 5 checkboxes with an input that lets the user enter the number of questions solved today. If the input is left empty, treat it as 0 questions. Saving the value must call the existing updateTodayProblems mutation with the entered value (or 0 if blank).",
       "files": [
-        "frontend/DEPLOYMENT.md"
+        "frontend/src/components/DailyTracker.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -16,7 +16,26 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-frontend-reminder-logic-and-copy-to-remove-the-complete-5-problems-framing-the-reminder-should-be-based-on-maintaining-the-streak-rule-show-a-reminder-when-today-s-logged-questions-are-0-i-e-they-have-not-solved-at-least-1-question-yet",
+      "featureTitle": "Update the frontend reminder logic and copy to remove the “complete 5 problems” framing. The reminder should be based on maintaining the streak rule: show a reminder when today’s logged questions are 0 (i.e., they have not solved at least 1 question yet).",
+      "files": [
+        "frontend/src/components/DailyReminder.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

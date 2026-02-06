@@ -43,8 +43,8 @@ export default function StatsCard() {
 
   const statCards = [
     {
-      title: 'Lifetime Problems Solved',
-      value: Number(stats?.totalProblemsSolved || 0),
+      title: 'Lifetime Questions Solved',
+      value: Number(stats?.totalQuestionsSolved || 0),
       icon: Target,
       color: 'text-purple-600 dark:text-purple-400',
       bgColor: 'bg-purple-100 dark:bg-purple-900/30',
@@ -68,11 +68,11 @@ export default function StatsCard() {
     },
     {
       title: 'Today\'s Progress',
-      value: `${Number(stats?.todayProblems || 0)} / 5`,
+      value: `${Number(stats?.todayQuestions || 0)}`,
       icon: TrendingUp,
       color: 'text-violet-600 dark:text-violet-400',
       bgColor: 'bg-violet-100 dark:bg-violet-900/30',
-      description: 'Daily goal',
+      description: 'Questions today',
     },
   ];
 

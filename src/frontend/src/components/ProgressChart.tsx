@@ -19,15 +19,15 @@ export default function ProgressChart() {
     
     return recentHistory.map((record) => {
       const date = new Date(Number(record.date) / 1_000_000);
-      cumulativeProblems += Number(record.problemsSolved);
+      cumulativeProblems += Number(record.questionsSolved);
       cumulativeFines += Number(record.penaltyApplied);
       
       return {
         date: format(date, 'MMM dd'),
         cumulativeProblems,
         cumulativeFines,
-        dailyProblems: Number(record.problemsSolved),
-        goalMet: Number(record.problemsSolved) >= 5,
+        dailyProblems: Number(record.questionsSolved),
+        goalMet: Number(record.questionsSolved) >= 1,
       };
     });
   }, [history]);
@@ -50,7 +50,7 @@ export default function ProgressChart() {
       <Card className="gradient-card border-purple-200 dark:border-purple-800 shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-primary">Cumulative Progress</CardTitle>
-          <CardDescription>Your lifetime problem-solving journey</CardDescription>
+          <CardDescription>Your lifetime question-solving journey</CardDescription>
         </CardHeader>
         <CardContent>
           <Alert variant="destructive">
@@ -69,7 +69,7 @@ export default function ProgressChart() {
       <Card className="gradient-card border-purple-200 dark:border-purple-800 shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-primary">Cumulative Progress</CardTitle>
-          <CardDescription>Your lifetime problem-solving journey</CardDescription>
+          <CardDescription>Your lifetime question-solving journey</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -79,7 +79,7 @@ export default function ProgressChart() {
               className="w-32 h-32 opacity-50"
             />
             <p className="text-muted-foreground text-center">
-              No history yet. Start solving problems to see your cumulative progress! 📊
+              No history yet. Start solving questions to see your cumulative progress! 📊
             </p>
           </div>
         </CardContent>
@@ -127,7 +127,7 @@ export default function ProgressChart() {
                 borderRadius: '8px',
               }}
               formatter={(value: number, name: string) => {
-                if (name === 'cumulativeProblems') return [value, 'Total Problems'];
+                if (name === 'cumulativeProblems') return [value, 'Total Questions'];
                 if (name === 'cumulativeFines') return [`₹${value}`, 'Total Fines'];
                 return [value, name];
               }}
@@ -135,7 +135,7 @@ export default function ProgressChart() {
             <Legend 
               wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value) => {
-                if (value === 'cumulativeProblems') return 'Cumulative Problems Solved';
+                if (value === 'cumulativeProblems') return 'Cumulative Questions Solved';
                 if (value === 'cumulativeFines') return 'Cumulative Fines (₹)';
                 return value;
               }}
@@ -162,7 +162,7 @@ export default function ProgressChart() {
         <div className="flex items-center justify-center gap-8 mt-6 p-4 bg-muted/50 rounded-lg">
           <div className="text-center">
             <div className="text-3xl font-bold text-primary">{latestData.cumulativeProblems}</div>
-            <div className="text-sm text-muted-foreground mt-1">Total Problems Solved</div>
+            <div className="text-sm text-muted-foreground mt-1">Total Questions Solved</div>
           </div>
           <div className="h-12 w-px bg-border" />
           <div className="text-center">

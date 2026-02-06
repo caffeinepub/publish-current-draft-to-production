@@ -1,21 +1,38 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Publish Draft Version 21 to production (frontend verification & release checklist)",
+  "title": "Daily questions: free-form count input + updated reminder for ≥1 streak rule",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Provide a frontend-focused publish checklist and verification steps to ensure production serves the same build/behavior as Draft Version 21, without introducing product/UI changes.",
+      "id": "REQ-3",
+      "summary": "Replace the 5-checkbox daily tracker with a numeric input that saves any non-negative question count (blank treated as 0) via the existing updateTodayProblems mutation.",
       "acceptanceCriteria": [
-        "The production deployment is updated to match Draft Version 21.",
-        "Users visiting the production URL see the same behavior/features as in the draft review environment.",
-        "No additional code changes are required unless publishing fails due to a detected build/deploy issue (in which case the failure reason is reported)."
+        "The DailyTracker component provides a numeric entry for “questions solved today” rather than 5 fixed checkboxes.",
+        "If the user clears the input and submits/saves, the app sends 0 to updateTodayProblems.",
+        "If the user enters a number (including >5) and submits/saves, the app sends that number to updateTodayProblems and the UI reflects the saved value after mutation success.",
+        "All user-facing labels/messages related to this control are in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/DEPLOYMENT.md",
-          "operation": "create",
-          "description": "Add a concise release/publish checklist for promoting Draft Version 21 to production, including: confirming the draft commit/build identifier, using the existing GitHub export/deploy tooling (use the github-export-icp-cli templates/scripts as the source of deployment workflow—Verify the component's usage instructions before implementing), and a post-deploy verification checklist comparing production vs draft behaviors (routing, auth/login flow, dashboard, leaderboard, chat) to satisfy acceptance criteria without introducing new UI/features."
+          "path": "frontend/src/components/DailyTracker.tsx",
+          "operation": "modify",
+          "description": "Replace the checkbox-based selection (fixed 0–5) with a controlled numeric input and an explicit Save action. Treat blank input as 0; validate to a non-negative integer before calling useUpdateTodayProblems (send BigInt(value)). Update all tracker copy to remove the “Goal: 5 problems” framing and ensure all labels/messages are English. Keep UI composed from existing components (e.g., Card/Button) and/or a native input; do not edit any files under frontend/src/components/ui."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Update reminder logic and copy to remove “complete 5 problems” framing and trigger only when today’s logged questions are 0.",
+      "acceptanceCriteria": [
+        "DailyReminder no longer calculates “problems left to complete 5”.",
+        "DailyReminder triggers only when stats.todayProblems is 0 (and not dismissed for the day).",
+        "Reminder text is updated to English copy consistent with the new rule (at least 1 question keeps streak; 0 breaks streak and applies a 20 rupees fine)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/DailyReminder.tsx",
+          "operation": "modify",
+          "description": "Change reminder trigger condition to show only when stats.todayProblems equals 0 (respecting the existing per-day dismissal). Remove all calculations and UI copy referencing “5 problems” or “problems left”. Update the English reminder message to reflect: solving at least 1 question keeps/increases streak; solving 0 breaks streak and incurs a flat ₹20 fine."
         }
       ]
     }

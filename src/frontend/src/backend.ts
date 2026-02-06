@@ -98,18 +98,18 @@ export interface Message {
     receiver: Principal;
 }
 export interface DailyRecord {
+    questionsSolved: bigint;
     date: Time;
     penaltyApplied: bigint;
-    problemsSolved: bigint;
 }
 export interface ChatUser {
     principal: Principal;
     name: string;
 }
 export interface UserProfile {
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 }
@@ -128,17 +128,19 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createUserProfileIfMissing(name: string): Promise<string>;
     getAllLifetimeStats(): Promise<Array<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
         name: string;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>>;
     getAllUserStats(): Promise<Array<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
         name: string;
         totalFine: bigint;
         dailyRecords: Array<DailyRecord>;
-        totalProblemsSolved: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>>;
@@ -149,21 +151,23 @@ export interface backendInterface {
     getChatUsers(): Promise<Array<ChatUser>>;
     getDailyHistory(): Promise<Array<DailyRecord>>;
     getStats(): Promise<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
+        todayQuestions: bigint;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
-        todayProblems: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>;
-    getTodayProblems(): Promise<bigint>;
+    getTodayQuestions(): Promise<bigint>;
     getUserDailyHistory(user: Principal): Promise<Array<DailyRecord>>;
     getUserLifetimeStats(user: Principal): Promise<{
+        totalQuestionsSolved: bigint;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
     }>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getUserStats(user: Principal): Promise<{
-        todayProblems: bigint;
+        highestDailyQuestions: bigint;
+        todayQuestions: bigint;
         profile: UserProfile;
         recordCount: bigint;
     } | null>;
@@ -172,9 +176,9 @@ export interface backendInterface {
     resetAllUserData(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     sendMessage(receiver: Principal, content: string): Promise<void>;
-    setTodayProblemsForUser(user: Principal, count: bigint): Promise<void>;
+    setTodayQuestionsForUser(user: Principal, count: bigint): Promise<void>;
     triggerDailyReset(): Promise<void>;
-    updateTodayProblems(count: bigint): Promise<void>;
+    updateTodayQuestions(count: bigint): Promise<void>;
     updateYesterdayData(): Promise<string>;
     verifyAccountExists(): Promise<{
         accountCreated: boolean;
@@ -227,9 +231,10 @@ export class Backend implements backendInterface {
         }
     }
     async getAllLifetimeStats(): Promise<Array<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
         name: string;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>> {
@@ -247,10 +252,11 @@ export class Backend implements backendInterface {
         }
     }
     async getAllUserStats(): Promise<Array<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
         name: string;
         totalFine: bigint;
         dailyRecords: Array<DailyRecord>;
-        totalProblemsSolved: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>> {
@@ -299,14 +305,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n12(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n12(this._uploadFile, this._downloadFile, result);
         }
     }
     async getChat(arg0: Principal): Promise<Array<Message>> {
@@ -352,36 +358,37 @@ export class Backend implements backendInterface {
         }
     }
     async getStats(): Promise<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
+        todayQuestions: bigint;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
-        todayProblems: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }> {
         if (this.processError) {
             try {
                 const result = await this.actor.getStats();
-                return from_candid_record_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_record_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getStats();
-            return from_candid_record_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_record_n14(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getTodayProblems(): Promise<bigint> {
+    async getTodayQuestions(): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.getTodayProblems();
+                const result = await this.actor.getTodayQuestions();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getTodayProblems();
+            const result = await this.actor.getTodayQuestions();
             return result;
         }
     }
@@ -400,8 +407,8 @@ export class Backend implements backendInterface {
         }
     }
     async getUserLifetimeStats(arg0: Principal): Promise<{
+        totalQuestionsSolved: bigint;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
     }> {
         if (this.processError) {
             try {
@@ -420,32 +427,33 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n14(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getUserStats(arg0: Principal): Promise<{
-        todayProblems: bigint;
-        profile: UserProfile;
-        recordCount: bigint;
-    } | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getUserStats(arg0);
                 return from_candid_opt_n15(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getUserStats(arg0);
+            const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n15(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getUserStats(arg0: Principal): Promise<{
+        highestDailyQuestions: bigint;
+        todayQuestions: bigint;
+        profile: UserProfile;
+        recordCount: bigint;
+    } | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserStats(arg0);
+                return from_candid_opt_n16(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserStats(arg0);
+            return from_candid_opt_n16(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -493,14 +501,14 @@ export class Backend implements backendInterface {
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n17(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n18(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n17(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n18(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -518,17 +526,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async setTodayProblemsForUser(arg0: Principal, arg1: bigint): Promise<void> {
+    async setTodayQuestionsForUser(arg0: Principal, arg1: bigint): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setTodayProblemsForUser(arg0, arg1);
+                const result = await this.actor.setTodayQuestionsForUser(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setTodayProblemsForUser(arg0, arg1);
+            const result = await this.actor.setTodayQuestionsForUser(arg0, arg1);
             return result;
         }
     }
@@ -546,17 +554,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async updateTodayProblems(arg0: bigint): Promise<void> {
+    async updateTodayQuestions(arg0: bigint): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateTodayProblems(arg0);
+                const result = await this.actor.updateTodayQuestions(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateTodayProblems(arg0);
+            const result = await this.actor.updateTodayQuestions(arg0);
             return result;
         }
     }
@@ -596,110 +604,145 @@ function from_candid_Badge_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     return from_candid_variant_n7(_uploadFile, _downloadFile, value);
 }
 function from_candid_UserProfile_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
-    return from_candid_record_n4(_uploadFile, _downloadFile, value);
+    return from_candid_record_n11(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n12(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n13(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+function from_candid_opt_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : from_candid_UserProfile_n10(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [{
-        todayProblems: bigint;
+function from_candid_opt_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [{
+        highestDailyQuestions: bigint;
+        todayQuestions: bigint;
         profile: _UserProfile;
         recordCount: bigint;
     }]): {
-    todayProblems: bigint;
+    highestDailyQuestions: bigint;
+    todayQuestions: bigint;
     profile: UserProfile;
     recordCount: bigint;
 } | null {
-    return value.length === 0 ? null : from_candid_record_n16(_uploadFile, _downloadFile, value[0]);
+    return value.length === 0 ? null : from_candid_record_n17(_uploadFile, _downloadFile, value[0]);
 }
 function from_candid_opt_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Badge]): Badge | null {
     return value.length === 0 ? null : from_candid_Badge_n6(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    totalQuestionsSolved: bigint;
+    name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
-    todayProblems: bigint;
     badge: [] | [_Badge];
     currentStreak: bigint;
 }): {
+    totalQuestionsSolved: bigint;
+    name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
-    todayProblems: bigint;
     badge?: Badge;
     currentStreak: bigint;
 } {
     return {
+        totalQuestionsSolved: value.totalQuestionsSolved,
+        name: value.name,
         totalFine: value.totalFine,
-        totalProblemsSolved: value.totalProblemsSolved,
-        todayProblems: value.todayProblems,
         badge: record_opt_to_undefined(from_candid_opt_n5(_uploadFile, _downloadFile, value.badge)),
         currentStreak: value.currentStreak
     };
 }
-function from_candid_record_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    todayProblems: bigint;
+function from_candid_record_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
+    todayQuestions: bigint;
+    totalFine: bigint;
+    badge: [] | [_Badge];
+    currentStreak: bigint;
+}): {
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
+    todayQuestions: bigint;
+    totalFine: bigint;
+    badge?: Badge;
+    currentStreak: bigint;
+} {
+    return {
+        highestDailyQuestions: value.highestDailyQuestions,
+        totalQuestionsSolved: value.totalQuestionsSolved,
+        todayQuestions: value.todayQuestions,
+        totalFine: value.totalFine,
+        badge: record_opt_to_undefined(from_candid_opt_n5(_uploadFile, _downloadFile, value.badge)),
+        currentStreak: value.currentStreak
+    };
+}
+function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    highestDailyQuestions: bigint;
+    todayQuestions: bigint;
     profile: _UserProfile;
     recordCount: bigint;
 }): {
-    todayProblems: bigint;
+    highestDailyQuestions: bigint;
+    todayQuestions: bigint;
     profile: UserProfile;
     recordCount: bigint;
 } {
     return {
-        todayProblems: value.todayProblems,
+        highestDailyQuestions: value.highestDailyQuestions,
+        todayQuestions: value.todayQuestions,
         profile: from_candid_UserProfile_n10(_uploadFile, _downloadFile, value.profile),
         recordCount: value.recordCount
     };
 }
 function from_candid_record_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge: [] | [_Badge];
     currentStreak: bigint;
 }): {
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 } {
     return {
+        highestDailyQuestions: value.highestDailyQuestions,
+        totalQuestionsSolved: value.totalQuestionsSolved,
         name: value.name,
         totalFine: value.totalFine,
-        totalProblemsSolved: value.totalProblemsSolved,
         badge: record_opt_to_undefined(from_candid_opt_n5(_uploadFile, _downloadFile, value.badge)),
         currentStreak: value.currentStreak
     };
 }
 function from_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
     dailyRecords: Array<_DailyRecord>;
-    totalProblemsSolved: bigint;
     badge: [] | [_Badge];
     currentStreak: bigint;
 }): {
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
     dailyRecords: Array<DailyRecord>;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 } {
     return {
+        highestDailyQuestions: value.highestDailyQuestions,
+        totalQuestionsSolved: value.totalQuestionsSolved,
         name: value.name,
         totalFine: value.totalFine,
         dailyRecords: value.dailyRecords,
-        totalProblemsSolved: value.totalProblemsSolved,
         badge: record_opt_to_undefined(from_candid_opt_n5(_uploadFile, _downloadFile, value.badge)),
         currentStreak: value.currentStreak
     };
 }
-function from_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -718,64 +761,68 @@ function from_candid_variant_n7(_uploadFile: (file: ExternalBlob) => Promise<Uin
     return "dsaMasterCat" in value ? Badge.dsaMasterCat : "legendaryScholar" in value ? Badge.legendaryScholar : "persistentRabbit" in value ? Badge.persistentRabbit : value;
 }
 function from_candid_vec_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<{
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge: [] | [_Badge];
     currentStreak: bigint;
 }>): Array<{
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 }> {
     return value.map((x)=>from_candid_record_n4(_uploadFile, _downloadFile, x));
 }
 function from_candid_vec_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<{
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
     dailyRecords: Array<_DailyRecord>;
-    totalProblemsSolved: bigint;
     badge: [] | [_Badge];
     currentStreak: bigint;
 }>): Array<{
+    highestDailyQuestions: bigint;
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
     dailyRecords: Array<DailyRecord>;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 }> {
     return value.map((x)=>from_candid_record_n9(_uploadFile, _downloadFile, x));
 }
-function to_candid_Badge_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Badge): _Badge {
-    return to_candid_variant_n20(_uploadFile, _downloadFile, value);
+function to_candid_Badge_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Badge): _Badge {
+    return to_candid_variant_n21(_uploadFile, _downloadFile, value);
 }
-function to_candid_UserProfile_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
-    return to_candid_record_n18(_uploadFile, _downloadFile, value);
+function to_candid_UserProfile_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
+    return to_candid_record_n19(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
 }
-function to_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 }): {
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge: [] | [_Badge];
     currentStreak: bigint;
 } {
     return {
+        totalQuestionsSolved: value.totalQuestionsSolved,
         name: value.name,
         totalFine: value.totalFine,
-        totalProblemsSolved: value.totalProblemsSolved,
-        badge: value.badge ? candid_some(to_candid_Badge_n19(_uploadFile, _downloadFile, value.badge)) : candid_none(),
+        badge: value.badge ? candid_some(to_candid_Badge_n20(_uploadFile, _downloadFile, value.badge)) : candid_none(),
         currentStreak: value.currentStreak
     };
 }
@@ -794,7 +841,7 @@ function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-function to_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Badge): {
+function to_candid_variant_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Badge): {
     dsaMasterCat: null;
 } | {
     legendaryScholar: null;

@@ -17,7 +17,7 @@ export default function HistoryTimeline() {
     let cumulativeFines = 0;
     
     return sorted.map(record => {
-      cumulativeProblems += Number(record.problemsSolved);
+      cumulativeProblems += Number(record.questionsSolved);
       cumulativeFines += Number(record.penaltyApplied);
       return {
         ...record,
@@ -120,9 +120,9 @@ export default function HistoryTimeline() {
           <div className="space-y-3">
             {sortedHistoryWithCumulative.map((record, index) => {
               const date = new Date(Number(record.date) / 1_000_000);
-              const problemsSolved = Number(record.problemsSolved);
+              const questionsSolved = Number(record.questionsSolved);
               const penalty = Number(record.penaltyApplied);
-              const goalMet = problemsSolved >= 5;
+              const goalMet = questionsSolved >= 1;
               const isToday = index === 0; // Most recent is likely today
 
               return (
@@ -171,7 +171,7 @@ export default function HistoryTimeline() {
                             goalMet ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                           }`} />
                           <span className="text-muted-foreground">
-                            <span className="font-semibold text-foreground">{problemsSolved}</span> / 5 problems
+                            <span className="font-semibold text-foreground">{questionsSolved}</span> questions
                           </span>
                         </div>
 
@@ -186,7 +186,7 @@ export default function HistoryTimeline() {
 
                         {goalMet && (
                           <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
-                            ✨ Goal achieved!
+                            ✨ Streak maintained!
                           </div>
                         )}
                       </div>
@@ -196,7 +196,7 @@ export default function HistoryTimeline() {
                         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <span className="font-semibold text-primary">Cumulative:</span>
-                            <span>{record.cumulativeProblems} total problems</span>
+                            <span>{record.cumulativeProblems} total questions</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span>•</span>
@@ -217,21 +217,21 @@ export default function HistoryTimeline() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {sortedHistoryWithCumulative.filter(r => Number(r.problemsSolved) >= 5).length}
+                {sortedHistoryWithCumulative.filter(r => Number(r.questionsSolved) >= 1).length}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Days with goal met</div>
+              <div className="text-xs text-muted-foreground mt-1">Days with streak</div>
             </div>
             <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
               <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {sortedHistoryWithCumulative.filter(r => Number(r.problemsSolved) < 5).length}
+                {sortedHistoryWithCumulative.filter(r => Number(r.questionsSolved) === 0).length}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Days below goal</div>
+              <div className="text-xs text-muted-foreground mt-1">Days missed</div>
             </div>
             <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20">
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {latestRecord.cumulativeProblems}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Lifetime problems</div>
+              <div className="text-xs text-muted-foreground mt-1">Lifetime questions</div>
             </div>
             <div className="p-3 rounded-lg bg-pink-50 dark:bg-pink-900/20">
               <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">

@@ -16,18 +16,18 @@ export interface Message {
     receiver: Principal;
 }
 export interface DailyRecord {
+    questionsSolved: bigint;
     date: Time;
     penaltyApplied: bigint;
-    problemsSolved: bigint;
 }
 export interface ChatUser {
     principal: Principal;
     name: string;
 }
 export interface UserProfile {
+    totalQuestionsSolved: bigint;
     name: string;
     totalFine: bigint;
-    totalProblemsSolved: bigint;
     badge?: Badge;
     currentStreak: bigint;
 }
@@ -45,17 +45,19 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createUserProfileIfMissing(name: string): Promise<string>;
     getAllLifetimeStats(): Promise<Array<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
         name: string;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>>;
     getAllUserStats(): Promise<Array<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
         name: string;
         totalFine: bigint;
         dailyRecords: Array<DailyRecord>;
-        totalProblemsSolved: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>>;
@@ -66,21 +68,23 @@ export interface backendInterface {
     getChatUsers(): Promise<Array<ChatUser>>;
     getDailyHistory(): Promise<Array<DailyRecord>>;
     getStats(): Promise<{
+        highestDailyQuestions: bigint;
+        totalQuestionsSolved: bigint;
+        todayQuestions: bigint;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
-        todayProblems: bigint;
         badge?: Badge;
         currentStreak: bigint;
     }>;
-    getTodayProblems(): Promise<bigint>;
+    getTodayQuestions(): Promise<bigint>;
     getUserDailyHistory(user: Principal): Promise<Array<DailyRecord>>;
     getUserLifetimeStats(user: Principal): Promise<{
+        totalQuestionsSolved: bigint;
         totalFine: bigint;
-        totalProblemsSolved: bigint;
     }>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getUserStats(user: Principal): Promise<{
-        todayProblems: bigint;
+        highestDailyQuestions: bigint;
+        todayQuestions: bigint;
         profile: UserProfile;
         recordCount: bigint;
     } | null>;
@@ -89,9 +93,9 @@ export interface backendInterface {
     resetAllUserData(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     sendMessage(receiver: Principal, content: string): Promise<void>;
-    setTodayProblemsForUser(user: Principal, count: bigint): Promise<void>;
+    setTodayQuestionsForUser(user: Principal, count: bigint): Promise<void>;
     triggerDailyReset(): Promise<void>;
-    updateTodayProblems(count: bigint): Promise<void>;
+    updateTodayQuestions(count: bigint): Promise<void>;
     updateYesterdayData(): Promise<string>;
     verifyAccountExists(): Promise<{
         accountCreated: boolean;

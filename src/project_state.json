@@ -1,22 +1,69 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
+  "summary": "Streak-based Q&A habit app: users can log any number of questions per day; streak increments when at least 1 question is logged; missing a day (0 questions) resets streak and applies a flat ₹20 fine; unanswered input defaults to 0 questions.",
+  "architectural_notes": [
+    "Question count input should default to 0 when not provided/blank.",
+    "Streak increments on days with question_count >= 1; streak resets and fine applies on days with question_count == 0.",
+    "Fine model is flat: ₹20 per missed day (no scaling)."
+  ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-publish-the-currently-deployed-draft-application-draft-version-21-to-production-so-the-production-url-serves-the-same-build-as-the-draft",
-      "title": "Publish the currently deployed draft application (Draft Version 21) to production so the production URL serves the same build as the draft.",
+      "id": "feature-replace-the-frontend-daily-tracking-ui-that-uses-5-checkboxes-with-an-input-that-lets-the-user-enter-the-number-of-questions-solved-today-if-the-input-is-left-empty-treat-it-as-0-questions-saving-the-value-must-call-the-existing-updatetodayproblems-mutation-with-the-entered-value-or-0-if-blank",
+      "title": "Replace the frontend daily tracking UI that uses 5 checkboxes with an input that lets the user enter the number of questions solved today. If the input is left empty, treat it as 0 questions. Saving the value must call the existing updateTodayProblems mutation with the entered value (or 0 if blank).",
       "reqIds": [
-        "REQ-1"
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-frontend-reminder-logic-and-copy-to-remove-the-complete-5-problems-framing-the-reminder-should-be-based-on-maintaining-the-streak-rule-show-a-reminder-when-today-s-logged-questions-are-0-i-e-they-have-not-solved-at-least-1-question-yet",
+      "title": "Update the frontend reminder logic and copy to remove the “complete 5 problems” framing. The reminder should be based on maintaining the streak rule: show a reminder when today’s logged questions are 0 (i.e., they have not solved at least 1 question yet).",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "Publish current draft to production",
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Allow users to log any number of questions per day (remove compulsory 5-question rule).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Daily streak logic: streak increases if user logs at least 1 question in a day; if 0 questions, streak resets and a flat ₹20 fine is applied.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add user input for number of questions completed; if user leaves it blank, treat it as 0 questions.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Update backend daily reset logic so users can log any number of questions per day (no fixed goal of 5), and apply streak/fine rules as: (a) if questions solved for the day is >= 1, increment current streak by 1 and apply no fine; (b) if questions solved for the day is 0, reset current streak to 0 and apply a flat fine of 20 rupees (always 20, not scaled). Persist the daily record with the day’s questionsSolved and the penaltyApplied amount.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Update backend APIs that set daily problem count to accept any non-negative count (Nat) without enforcing an upper limit of 5, and ensure the daily count update still triggers a reset first if the user is past the daily reset boundary (so the update applies to the new day).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Allow any daily question count with streak on ≥1 and flat ₹20 fine on 0",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

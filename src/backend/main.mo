@@ -8,25 +8,13 @@ import Nat "mo:core/Nat";
 import Int "mo:core/Int";
 import Principal "mo:core/Principal";
 import Text "mo:core/Text";
+import Migration "migration";
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
+(with migration = Migration.run)
 actor {
-  type UserProfile = {
-    name : Text;
-    totalProblemsSolved : Nat;
-    totalFine : Nat;
-    currentStreak : Nat;
-    badge : ?Badge;
-  };
-
-  type DailyRecord = {
-    date : Time.Time;
-    problemsSolved : Nat;
-    penaltyApplied : Nat;
-  };
-
   public type Message = {
     sender : Principal.Principal;
     receiver : Principal.Principal;
@@ -39,14 +27,29 @@ actor {
     name : Text;
   };
 
+  type UserProfile = {
+    name : Text;
+    totalQuestionsSolved : Nat;
+    totalFine : Nat;
+    currentStreak : Nat;
+    badge : ?Badge;
+  };
+
+  type DailyRecord = {
+    date : Time.Time;
+    questionsSolved : Nat;
+    penaltyApplied : Nat;
+  };
+
   public type UserData = {
     profile : UserProfile;
     dailyRecords : [DailyRecord];
-    todayProblemCount : Nat;
-    lastResetDate : Time.Time;
+    todayQuestionsCount : Nat;
+    lastDailyResetDate : Time.Time;
     lastChallengeCompletedDate : ?Time.Time;
     totalFine : Nat;
     creationDate : Time.Time;
+    highestDailyQuestions : Nat;
   };
 
   type Badge = {
@@ -57,7 +60,7 @@ actor {
 
   let userDataMap = Map.empty<Principal.Principal, UserData>();
   let chatMap = Map.empty<Text, [Message]>();
-  let DAILY_GOAL : Nat = 5;
+  let PENALTY_EXCEPTIONAL_LIMIT : Nat = 1;
   let PENALTY_PER_PROBLEM : Nat = 20;
   let IST_OFFSET_NANOS : Int = 5 * 60 * 60 * 1_000_000_000 + 30 * 60 * 1_000_000_000;
   let RESET_HOUR_IST : Nat = 2;
@@ -72,7 +75,7 @@ actor {
       case (null) {
         let defaultProfile : UserProfile = {
           name = "";
-          totalProblemsSolved = 0;
+          totalQuestionsSolved = 0;
           totalFine = 0;
           currentStreak = 0;
           badge = null;
@@ -80,11 +83,12 @@ actor {
         let defaultData : UserData = {
           profile = defaultProfile;
           dailyRecords = [];
-          todayProblemCount = 0;
-          lastResetDate = Time.now();
+          todayQuestionsCount = 0;
+          lastDailyResetDate = Time.now();
           lastChallengeCompletedDate = null;
           totalFine = 0;
           creationDate = Time.now();
+          highestDailyQuestions = 0;
         };
         userDataMap.add(caller, defaultData);
         defaultData;
@@ -123,7 +127,7 @@ actor {
 
   func shouldResetForUser(userData : UserData) : Bool {
     let now = Time.now();
-    let lastResetIST = userData.lastResetDate + IST_OFFSET_NANOS;
+    let lastResetIST = userData.lastDailyResetDate + IST_OFFSET_NANOS;
     let nowIST = now + IST_OFFSET_NANOS;
     let lastResetDays = lastResetIST / (24 * 60 * 60 * 1_000_000_000);
     let nowDays = nowIST / (24 * 60 * 60 * 1_000_000_000);
@@ -138,7 +142,7 @@ actor {
       let todayStartIST = nowDays * 24 * 60 * 60 * 1_000_000_000;
       let resetTimeToday = todayStartIST + Int.abs(RESET_HOUR_IST * 60 * 60 * 1_000_000_000);
 
-      let isFirstDayWithPastReset = (nowDays == creationDay and userData.todayProblemCount == 0);
+      let isFirstDayWithPastReset = (nowDays == creationDay and userData.todayQuestionsCount == 0);
       if (isFirstDayWithPastReset) {
         return false;
       };
@@ -151,20 +155,18 @@ actor {
 
   func processDailyResetForUser(_ : Principal.Principal, userData : UserData) : UserData {
     let record : DailyRecord = {
-      date = userData.lastResetDate;
-      problemsSolved = userData.todayProblemCount;
-      penaltyApplied = if (userData.todayProblemCount < DAILY_GOAL) {
-        (DAILY_GOAL - userData.todayProblemCount : Nat) * PENALTY_PER_PROBLEM;
-      } else { 0 };
+      date = userData.lastDailyResetDate;
+      questionsSolved = userData.todayQuestionsCount;
+      penaltyApplied = if (userData.todayQuestionsCount < 1) { 20 } else { 0 };
     };
 
-    let newStreak = if (userData.todayProblemCount >= DAILY_GOAL) {
+    let newStreak = if (userData.todayQuestionsCount >= 1) {
       userData.profile.currentStreak + 1;
     } else { 0 };
 
     let updatedProfile : UserProfile = updateBadgeIfNeeded({
       name = userData.profile.name;
-      totalProblemsSolved = userData.profile.totalProblemsSolved + userData.todayProblemCount;
+      totalQuestionsSolved = userData.profile.totalQuestionsSolved + userData.todayQuestionsCount;
       totalFine = userData.profile.totalFine + record.penaltyApplied;
       currentStreak = newStreak;
       badge = userData.profile.badge;
@@ -173,11 +175,12 @@ actor {
     {
       profile = updatedProfile;
       dailyRecords = userData.dailyRecords.concat([record]);
-      todayProblemCount = 0;
-      lastResetDate = Time.now();
+      todayQuestionsCount = 0;
+      lastDailyResetDate = Time.now();
       lastChallengeCompletedDate = userData.lastChallengeCompletedDate;
       totalFine = userData.totalFine + record.penaltyApplied;
       creationDate = userData.creationDate;
+      highestDailyQuestions = userData.highestDailyQuestions;
     };
   };
 
@@ -190,7 +193,7 @@ actor {
     };
   };
 
-  func calculateAdjustedLastResetDate() : Time.Time {
+  func calculateAdjustedLastDailyResetDate() : Time.Time {
     let nowIST = Time.now() + IST_OFFSET_NANOS;
     let currentDayStart = (nowIST / (24 * 60 * 60 * 1_000_000_000)) * (24 * 60 * 60 * 1_000_000_000);
 
@@ -217,7 +220,7 @@ actor {
       case (null) {
         let defaultProfile : UserProfile = {
           name = "";
-          totalProblemsSolved = 0;
+          totalQuestionsSolved = 0;
           totalFine = 0;
           currentStreak = 0;
           badge = null;
@@ -246,7 +249,7 @@ actor {
 
     let profileWithCorrectBadge = updateBadgeIfNeeded({
       name = profile.name;
-      totalProblemsSolved = profile.totalProblemsSolved;
+      totalQuestionsSolved = profile.totalQuestionsSolved;
       totalFine = profile.totalFine;
       currentStreak = profile.currentStreak;
       badge = null;
@@ -257,11 +260,12 @@ actor {
         let newUserData : UserData = {
           profile = profileWithCorrectBadge;
           dailyRecords = [];
-          todayProblemCount = 0;
-          lastResetDate = Time.now();
+          todayQuestionsCount = 0;
+          lastDailyResetDate = Time.now();
           lastChallengeCompletedDate = null;
           totalFine = 0;
           creationDate = Time.now();
+          highestDailyQuestions = 0;
         };
         userDataMap.add(caller, newUserData);
       };
@@ -275,13 +279,9 @@ actor {
     };
   };
 
-  public shared ({ caller }) func updateTodayProblems(count : Nat) : async () {
+  public shared ({ caller }) func updateTodayQuestions(count : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update their problem count");
-    };
-
-    if (count > DAILY_GOAL) {
-      Runtime.trap("Cannot set more than daily goal of 5 problems");
+      Runtime.trap("Unauthorized: Only users can update their question count");
     };
 
     let userData = getUserDataInternal(caller);
@@ -293,11 +293,12 @@ actor {
 
     let updatedData = {
       finalUpdate with
-      todayProblemCount = count;
+      todayQuestionsCount = count;
+      highestDailyQuestions = Nat.max(finalUpdate.highestDailyQuestions, count);
     };
     userDataMap.add(caller, updatedData);
 
-    if (count >= DAILY_GOAL) {
+    if (count >= PENALTY_EXCEPTIONAL_LIMIT) {
       let newUserData = {
         updatedData with
         lastChallengeCompletedDate = ?Time.now();
@@ -306,16 +307,16 @@ actor {
     };
   };
 
-  public query ({ caller }) func getTodayProblems() : async Nat {
+  public query ({ caller }) func getTodayQuestions() : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view their problem count");
+      Runtime.trap("Unauthorized: Only users can view their question count");
     };
 
     switch (userDataMap.get(caller)) {
       case (null) { 0 };
       case (?userData) {
         if (shouldResetForUser(userData)) { 0 } else {
-          userData.todayProblemCount;
+          userData.todayQuestionsCount;
         };
       };
     };
@@ -348,11 +349,12 @@ actor {
   };
 
   public query ({ caller }) func getStats() : async {
-    totalProblemsSolved : Nat;
+    totalQuestionsSolved : Nat;
     totalFine : Nat;
     currentStreak : Nat;
-    todayProblems : Nat;
+    todayQuestions : Nat;
     badge : ?Badge;
+    highestDailyQuestions : Nat;
   } {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view their stats");
@@ -361,22 +363,24 @@ actor {
     switch (userDataMap.get(caller)) {
       case (null) {
         {
-          totalProblemsSolved = 0;
+          totalQuestionsSolved = 0;
           totalFine = 0;
           currentStreak = 0;
-          todayProblems = 0;
+          todayQuestions = 0;
           badge = null;
+          highestDailyQuestions = 0;
         };
       };
       case (?userData) {
         {
-          totalProblemsSolved = userData.profile.totalProblemsSolved;
+          totalQuestionsSolved = userData.profile.totalQuestionsSolved;
           totalFine = userData.totalFine;
           currentStreak = userData.profile.currentStreak;
-          todayProblems = if (shouldResetForUser(userData)) { 0 } else {
-            userData.todayProblemCount;
+          todayQuestions = if (shouldResetForUser(userData)) { 0 } else {
+            userData.todayQuestionsCount;
           };
           badge = userData.profile.badge;
+          highestDailyQuestions = userData.highestDailyQuestions;
         };
       };
     };
@@ -396,8 +400,9 @@ actor {
 
   public query ({ caller }) func getUserStats(user : Principal.Principal) : async ?{
     profile : UserProfile;
-    todayProblems : Nat;
+    todayQuestions : Nat;
     recordCount : Nat;
+    highestDailyQuestions : Nat;
   } {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can view user stats");
@@ -408,8 +413,9 @@ actor {
       case (?userData) {
         ?{
           profile = userData.profile;
-          todayProblems = userData.todayProblemCount;
+          todayQuestions = userData.todayQuestionsCount;
           recordCount = userData.dailyRecords.size();
+          highestDailyQuestions = userData.highestDailyQuestions;
         };
       };
     };
@@ -424,11 +430,12 @@ actor {
 
   public query ({ caller }) func getAllUserStats() : async [{
     name : Text;
-    totalProblemsSolved : Nat;
+    totalQuestionsSolved : Nat;
     totalFine : Nat;
     currentStreak : Nat;
     badge : ?Badge;
     dailyRecords : [DailyRecord];
+    highestDailyQuestions : Nat;
   }] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Must be logged in to view leaderboard");
@@ -438,11 +445,12 @@ actor {
       func((_, userData)) {
         {
           name = userData.profile.name;
-          totalProblemsSolved = userData.profile.totalProblemsSolved;
+          totalQuestionsSolved = userData.profile.totalQuestionsSolved;
           totalFine = userData.totalFine;
           currentStreak = userData.profile.currentStreak;
           badge = userData.profile.badge;
           dailyRecords = userData.dailyRecords;
+          highestDailyQuestions = userData.highestDailyQuestions;
         };
       }
     );
@@ -523,13 +531,9 @@ actor {
     );
   };
 
-  public shared ({ caller }) func setTodayProblemsForUser(user : Principal.Principal, count : Nat) : async () {
+  public shared ({ caller }) func setTodayQuestionsForUser(user : Principal.Principal, count : Nat) : async () {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      Runtime.trap("Unauthorized: Only admin can set problems for others");
-    };
-
-    if (count > DAILY_GOAL) {
-      Runtime.trap("Cannot set more than daily goal of 5 problems");
+      Runtime.trap("Unauthorized: Only admin can set questions for others");
     };
 
     let userData = getUserDataInternal(user);
@@ -541,7 +545,8 @@ actor {
 
     let updatedData = {
       finalUpdate with
-      todayProblemCount = count;
+      todayQuestionsCount = count;
+      highestDailyQuestions = Nat.max(finalUpdate.highestDailyQuestions, count);
     };
     userDataMap.add(user, updatedData);
   };
@@ -564,7 +569,7 @@ actor {
       case (null) {
         let newUserProfile : UserProfile = {
           name;
-          totalProblemsSolved = 0;
+          totalQuestionsSolved = 0;
           totalFine = 0;
           currentStreak = 0;
           badge = null;
@@ -573,11 +578,12 @@ actor {
         let newUserData : UserData = {
           profile = newUserProfile;
           dailyRecords = [];
-          todayProblemCount = 0;
-          lastResetDate = calculateAdjustedLastResetDate();
+          todayQuestionsCount = 0;
+          lastDailyResetDate = calculateAdjustedLastDailyResetDate();
           lastChallengeCompletedDate = null;
           totalFine = 0;
           creationDate = Time.now();
+          highestDailyQuestions = 0;
         };
 
         userDataMap.add(caller, newUserData);
@@ -615,7 +621,7 @@ actor {
   };
 
   public query ({ caller }) func getUserLifetimeStats(user : Principal.Principal) : async {
-    totalProblemsSolved : Nat;
+    totalQuestionsSolved : Nat;
     totalFine : Nat;
   } {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
@@ -623,10 +629,10 @@ actor {
     };
 
     switch (userDataMap.get(user)) {
-      case (null) { { totalProblemsSolved = 0; totalFine = 0 } };
+      case (null) { { totalQuestionsSolved = 0; totalFine = 0 } };
       case (?userData) {
         {
-          totalProblemsSolved = userData.profile.totalProblemsSolved;
+          totalQuestionsSolved = userData.profile.totalQuestionsSolved;
           totalFine = userData.totalFine;
         };
       };
@@ -635,10 +641,11 @@ actor {
 
   public query ({ caller }) func getAllLifetimeStats() : async [{
     name : Text;
-    totalProblemsSolved : Nat;
+    totalQuestionsSolved : Nat;
     totalFine : Nat;
     currentStreak : Nat;
     badge : ?Badge;
+    highestDailyQuestions : Nat;
   }] {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
       Runtime.trap("Unauthorized: Only admins can view global stats");
@@ -648,10 +655,11 @@ actor {
       func((_, userData)) {
         {
           name = userData.profile.name;
-          totalProblemsSolved = userData.profile.totalProblemsSolved;
+          totalQuestionsSolved = userData.profile.totalQuestionsSolved;
           totalFine = userData.totalFine;
           currentStreak = userData.profile.currentStreak;
           badge = userData.profile.badge;
+          highestDailyQuestions = userData.highestDailyQuestions;
         };
       }
     );
@@ -696,7 +704,7 @@ actor {
       case (null, ?_) { false };
       case (?_, null) { false };
       case (?record1, ?record2) {
-        (record1.date == record2.date) and (record1.problemsSolved == record2.problemsSolved) and (record1.penaltyApplied == record2.penaltyApplied);
+        (record1.date == record2.date) and (record1.questionsSolved == record2.questionsSolved) and (record1.penaltyApplied == record2.penaltyApplied);
       };
     };
   };
@@ -704,22 +712,22 @@ actor {
   func processRetrospectiveReset(_ : Principal.Principal, userData : UserData, retroactive : Bool) : UserData {
     let record : DailyRecord = {
       date = switch (userData.dailyRecords.reverse().values().next()) {
-        case (null) { userData.lastResetDate };
+        case (null) { userData.lastDailyResetDate };
         case (?latestRecord) { latestRecord.date };
       };
-      problemsSolved = userData.todayProblemCount;
-      penaltyApplied = if (userData.todayProblemCount < DAILY_GOAL and not retroactive) {
-        (DAILY_GOAL - userData.todayProblemCount : Nat) * PENALTY_PER_PROBLEM;
+      questionsSolved = userData.todayQuestionsCount;
+      penaltyApplied = if (userData.todayQuestionsCount < 1 and not retroactive) {
+        20;
       } else { 0 };
     };
 
-    let newStreak = if (userData.todayProblemCount >= DAILY_GOAL) {
+    let newStreak = if (userData.todayQuestionsCount >= 1) {
       userData.profile.currentStreak + 1;
     } else { 0 };
 
     let updatedProfile : UserProfile = updateBadgeIfNeeded({
       name = userData.profile.name;
-      totalProblemsSolved = userData.profile.totalProblemsSolved + userData.todayProblemCount;
+      totalQuestionsSolved = userData.profile.totalQuestionsSolved + userData.todayQuestionsCount;
       totalFine = if (retroactive) {
         userData.profile.totalFine + record.penaltyApplied;
       } else {
@@ -734,11 +742,14 @@ actor {
     {
       profile = updatedProfile;
       dailyRecords = updatedDailyReviewArray;
-      todayProblemCount = if (retroactive) { 0 } else { userData.todayProblemCount };
-      lastResetDate = if (retroactive) { userData.lastResetDate } else { Time.now() };
+      todayQuestionsCount = if (retroactive) { 0 } else { userData.todayQuestionsCount };
+      lastDailyResetDate = if (retroactive) { userData.lastDailyResetDate } else {
+        Time.now();
+      };
       lastChallengeCompletedDate = userData.lastChallengeCompletedDate;
       totalFine = 0;
       creationDate = userData.creationDate;
+      highestDailyQuestions = userData.highestDailyQuestions;
     };
   };
 };

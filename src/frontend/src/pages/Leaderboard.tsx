@@ -28,7 +28,7 @@ export default function Leaderboard() {
   const sortedUsers = useMemo(() => {
     if (!allUserStats) return [];
     return [...allUserStats].sort(
-      (a, b) => Number(b.totalProblemsSolved) - Number(a.totalProblemsSolved)
+      (a, b) => Number(b.totalQuestionsSolved) - Number(a.totalQuestionsSolved)
     );
   }, [allUserStats]);
 
@@ -37,7 +37,7 @@ export default function Leaderboard() {
     const prepareProblemsComparisonData = () => {
       return sortedUsers.map((user, index) => ({
         name: user.name || 'Anonymous',
-        problems: Number(user.totalProblemsSolved),
+        problems: Number(user.totalQuestionsSolved),
         rank: index + 1,
       }));
     };
@@ -87,7 +87,7 @@ export default function Leaderboard() {
           if (user.dailyRecords && user.dailyRecords.length > 0) {
             user.dailyRecords.forEach(record => {
               if (Number(record.date) <= dateNum) {
-                cumulative += Number(record.problemsSolved);
+                cumulative += Number(record.questionsSolved);
               }
             });
           }
@@ -220,7 +220,7 @@ export default function Leaderboard() {
       {sortedUsers.length === 0 ? (
         <Card className="gradient-card animate-in slide-in-from-bottom duration-700">
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground text-lg">No users yet. Be the first to start solving problems!</p>
+            <p className="text-muted-foreground text-lg">No users yet. Be the first to start solving questions!</p>
           </CardContent>
         </Card>
       ) : (
@@ -243,7 +243,7 @@ export default function Leaderboard() {
               <Tabs defaultValue="cumulative" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-6">
                   <TabsTrigger value="cumulative" className="transition-all duration-300">Cumulative Progress</TabsTrigger>
-                  <TabsTrigger value="problems" className="transition-all duration-300">Lifetime Problems</TabsTrigger>
+                  <TabsTrigger value="problems" className="transition-all duration-300">Lifetime Questions</TabsTrigger>
                   <TabsTrigger value="fines" className="transition-all duration-300">Lifetime Fines</TabsTrigger>
                   <TabsTrigger value="streaks" className="transition-all duration-300">Current Streaks</TabsTrigger>
                 </TabsList>
@@ -252,7 +252,7 @@ export default function Leaderboard() {
                 <TabsContent value="cumulative" className="space-y-4 animate-in fade-in duration-500">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Cumulative Problems Solved Over Time</h3>
+                    <h3 className="text-lg font-semibold">Cumulative Questions Solved Over Time</h3>
                   </div>
                   {chartData.cumulativeProgressData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={400}>
@@ -287,7 +287,7 @@ export default function Leaderboard() {
                     </ResponsiveContainer>
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">
-                      No historical data available yet. Start solving problems to see cumulative progress!
+                      No historical data available yet. Start solving questions to see cumulative progress!
                     </div>
                   )}
                   <p className="text-center text-xs text-muted-foreground mt-4">
@@ -295,11 +295,11 @@ export default function Leaderboard() {
                   </p>
                 </TabsContent>
 
-                {/* Lifetime Problems Bar Chart */}
+                {/* Lifetime Questions Bar Chart */}
                 <TabsContent value="problems" className="space-y-4 animate-in fade-in duration-500">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Lifetime Problems Solved Comparison</h3>
+                    <h3 className="text-lg font-semibold">Lifetime Questions Solved Comparison</h3>
                   </div>
                   <ResponsiveContainer width="100%" height={400}>
                     <MemoizedBarChart data={chartData.problemsData}>
@@ -326,7 +326,7 @@ export default function Leaderboard() {
                       <div key={index} className="flex items-center gap-2">
                         <BadgeDisplay badge={user.badge} size="small" animate />
                         <span className="text-sm text-muted-foreground">
-                          {user.name}: {Number(user.totalProblemsSolved)} lifetime problems
+                          {user.name}: {Number(user.totalQuestionsSolved)} lifetime questions
                         </span>
                       </div>
                     ))}
@@ -406,61 +406,58 @@ export default function Leaderboard() {
 
           {/* Leaderboard List */}
           <div className="space-y-4 max-w-4xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <h3 className="text-2xl font-bold text-center animate-in slide-in-from-bottom duration-700 delay-300">
-                Rankings by Lifetime Totals
-              </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-primary">Top Performers</h3>
               {isFetching && (
                 <RefreshCw className="w-5 h-5 animate-spin text-primary" />
               )}
             </div>
             {sortedUsers.map((user, index) => (
-              <Card 
-                key={`${user.name}-${index}`}
-                className={`${getRankBgColor(index)} shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] animate-in slide-in-from-bottom`}
-                style={{ animationDelay: `${400 + index * 50}ms` }}
+              <Card
+                key={index}
+                className={`gradient-card shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 ${getRankBgColor(index)} animate-in slide-in-from-bottom duration-700`}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
-                    {/* Rank */}
+                    {/* Rank Icon */}
                     <div className="flex-shrink-0 w-12 flex justify-center">
                       {getRankIcon(index)}
                     </div>
 
-                    {/* Badge */}
-                    <div className="flex-shrink-0">
-                      <BadgeDisplay badge={user.badge} size="medium" animate={index < 3} />
-                    </div>
-
                     {/* User Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-foreground truncate">
+                      <h4 className="text-xl font-bold text-foreground truncate">
                         {user.name || 'Anonymous'}
-                      </h3>
+                      </h4>
                       <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1 transition-all duration-300 hover:scale-110">
-                          <TrendingUp className="w-4 h-4" />
-                          <span>{Number(user.totalProblemsSolved)} lifetime problems</span>
+                        <div className="flex items-center gap-1.5">
+                          <TrendingUp className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-foreground">
+                            {Number(user.totalQuestionsSolved)}
+                          </span>
+                          <span>questions</span>
                         </div>
-                        <div className="flex items-center gap-1 transition-all duration-300 hover:scale-110">
-                          <span>🔥</span>
-                          <span>{Number(user.currentStreak)} day streak</span>
+                        <div className="flex items-center gap-1.5">
+                          <Flame className="w-4 h-4 text-orange-500" />
+                          <span className="font-semibold text-foreground">
+                            {Number(user.currentStreak)}
+                          </span>
+                          <span>day streak</span>
                         </div>
-                        <div className="flex items-center gap-1 transition-all duration-300 hover:scale-110">
-                          <span>💰</span>
-                          <span>₹{Number(user.totalFine)} lifetime fine</span>
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="w-4 h-4 text-destructive" />
+                          <span className="font-semibold text-destructive">
+                            ₹{Number(user.totalFine)}
+                          </span>
+                          <span>fines</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Stats Summary (Desktop) */}
-                    <div className="hidden lg:flex flex-col items-end gap-1">
-                      <div className="text-3xl font-bold text-primary">
-                        {Number(user.totalProblemsSolved)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        lifetime total
-                      </div>
+                    {/* Badge */}
+                    <div className="flex-shrink-0">
+                      <BadgeDisplay badge={user.badge} size="medium" animate />
                     </div>
                   </div>
                 </CardContent>
@@ -469,25 +466,6 @@ export default function Leaderboard() {
           </div>
         </>
       )}
-
-      {/* Cute Illustrations Footer */}
-      <div className="flex justify-center items-center gap-8 py-8">
-        <img 
-          src="/assets/generated/study-bunny-transparent.dim_200x200.png" 
-          alt="Study Bunny" 
-          className="w-24 h-24 opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:rotate-6"
-        />
-        <img 
-          src="/assets/generated/rabbit-studying-transparent.dim_200x200.png" 
-          alt="Rabbit Studying" 
-          className="w-24 h-24 opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:-rotate-6"
-        />
-        <img 
-          src="/assets/generated/cat-reading-transparent.dim_200x200.png" 
-          alt="Cat Reading" 
-          className="w-24 h-24 opacity-50 hover:opacity-100 transition-all duration-300 hover:scale-110 hover:rotate-6"
-        />
-      </div>
     </div>
   );
 }
